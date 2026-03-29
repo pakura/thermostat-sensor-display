@@ -8,15 +8,24 @@
 #include <ArduinoJson.h>
 #include "ui/ui.h"
 #include "secrets.h"
+#include <Wire.h>
+#include <Adafruit_SHT31.h>
+
+
+#define POT_PIN 4
 
 LGFX lcd;
 
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASS;
 bool wifiConnected = false;
+#define POT_PIN 4;
+Adafruit_SHT31 sht31 = Adafruit_SHT31();
+
 
 unsigned long lastHomeFetch    = 0;
 unsigned long lastWeatherFetch = 0;
+unsigned long lastPingFetch    = 0;
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[170 * 20];
@@ -167,6 +176,48 @@ void fetchWeatherData() {
   http.end();
 }
 
+void updateBrightness() {
+  static uint8_t lastBrightness = 0;
+
+  int raw = analogRead(POT_PIN);
+  uint8_t brightness = map(raw, 0, 4095, 5, 255);
+
+  if (abs(brightness - lastBrightness) > 2) {
+    lastBrightness = brightness;
+    lcd.setBrightness(brightness);
+  }
+}
+
+void sendPing() {
+  if (millis() - lastPingFetch < 300000) return; // ყოველ 5 წუთში ერთხელ
+  lastPingFetch = millis();
+
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  float temp = sht31.readTemperature();
+  float hum  = sht31.readHumidity();
+
+  if (isnan(temp) || isnan(hum)) {
+    Serial.println("SHT31 read error");
+    return;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure();
+
+  HTTPClient http;
+  String url = "https://" + String(API_KEY) + ".http.ge/api/ping?temp=" + String(temp, 1) + "&hum=" + String(hum, 0);
+  http.begin(client, url);
+
+  int code = http.GET();
+  Serial.print("=== /api/ping === ");
+  Serial.print(code);
+  Serial.print(" | temp="); Serial.print(temp, 1);
+  Serial.print(" hum=");    Serial.println(hum, 0);
+
+  http.end();
+}
+
 void checkWiFi() {
   static unsigned long lastCheck = 0;
 
@@ -182,6 +233,7 @@ void checkWiFi() {
       // timer-ები გადაყენდება რომ ეგრევე გაიგზავნოს რექვესტი
       lastHomeFetch    = millis() - 10000;
       lastWeatherFetch = millis() - 900000;
+      lastPingFetch    = millis() - 300000;
 
       // აჩვენე icon
       lv_obj_clear_flag(ui_wifi, LV_OBJ_FLAG_HIDDEN);
@@ -201,7 +253,6 @@ void checkWiFi() {
 void setup() {
   lcd.init();
   lcd.setRotation(0);
-  lcd.setBrightness(150);
 
   lv_init();
 
@@ -233,13 +284,22 @@ void setup() {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
   
+  Wire.begin(18, 21); 
+  if (!sht31.begin(0x44)) {
+    Serial.println("❌ SHT31 cont found");
+    while (1);
+  }
+
+  Serial.println("SHT31 done");
 }
 
 void loop() {
   lv_timer_handler();
   lv_tick_inc(5);
+  updateBrightness();
   checkWiFi();
   fetchHomeData();
   fetchWeatherData();
+  sendPing();
   delay(5);
 }
