@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../T-Display-S3"
+		},
+		{
+			"name": "test",
+			"path": "../../test"
+		},
+		{
+			"name": "ThermoStat",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
