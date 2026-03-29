@@ -11,13 +11,14 @@
 #include <Wire.h>
 #include <Adafruit_SHT31.h>
 
+#define POT_PIN 4
 
 LGFX lcd;
 
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASS;
 bool wifiConnected = false;
-#define POT_PIN 4;
+
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 
 
@@ -320,8 +321,8 @@ void setup() {
 }
 
 void loop() {
-  lv_timer_handler();
   lv_tick_inc(5);
+  lv_timer_handler();
   updateBrightness();
   readSHT31();
   checkWiFi();
