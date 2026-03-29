@@ -5,7 +5,7 @@
 
 #include "ui.h"
 
-lv_obj_t *ui_Screen1 = NULL;lv_obj_t *ui_background = NULL;lv_obj_t *ui_warning = NULL;lv_obj_t *ui_status = NULL;lv_obj_t *ui_power = NULL;lv_obj_t *ui_wifi = NULL;lv_obj_t *ui_temp = NULL;lv_obj_t *ui_target = NULL;lv_obj_t *ui_otemp = NULL;lv_obj_t *ui_owin = NULL;lv_obj_t *ui_owin1 = NULL;lv_obj_t *ui_cost = NULL;
+lv_obj_t *ui_Screen1 = NULL;lv_obj_t *ui_background = NULL;lv_obj_t *ui_warning = NULL;lv_obj_t *ui_status = NULL;lv_obj_t *ui_power = NULL;lv_obj_t *ui_wifi = NULL;lv_obj_t *ui_temp = NULL;lv_obj_t *ui_target = NULL;lv_obj_t *ui_otemp = NULL;lv_obj_t *ui_owin = NULL;lv_obj_t *ui_owin1 = NULL;lv_obj_t *ui_cost = NULL;lv_obj_t *ui_hum = NULL;
 // event funtions
 void ui_event_Screen1( lv_event_t * e) {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -137,6 +137,17 @@ lv_obj_set_style_text_color(ui_cost, lv_color_hex(0xF1C1A0), LV_PART_MAIN | LV_S
 lv_obj_set_style_text_opa(ui_cost, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_cost, &ui_font_digismall, LV_PART_MAIN| LV_STATE_DEFAULT);
 
+ui_hum = lv_label_create(ui_Screen1);
+lv_obj_set_width( ui_hum, LV_SIZE_CONTENT);  /// 1
+lv_obj_set_height( ui_hum, LV_SIZE_CONTENT);   /// 1
+lv_obj_set_x( ui_hum, -16 );
+lv_obj_set_y( ui_hum, -96 );
+lv_obj_set_align( ui_hum, LV_ALIGN_CENTER );
+lv_label_set_text(ui_hum,"24.0");
+lv_obj_set_style_text_color(ui_hum, lv_color_hex(0xF1C1A0), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_text_opa(ui_hum, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_hum, &ui_font_digismallest, LV_PART_MAIN| LV_STATE_DEFAULT);
+
 lv_obj_add_event_cb(ui_Screen1, ui_event_Screen1, LV_EVENT_ALL, NULL);
 
 }
@@ -158,5 +169,6 @@ ui_otemp= NULL;
 ui_owin= NULL;
 ui_owin1= NULL;
 ui_cost= NULL;
+ui_hum= NULL;
 
 }

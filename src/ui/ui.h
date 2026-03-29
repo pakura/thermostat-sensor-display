@@ -47,6 +47,7 @@ LV_FONT_DECLARE( ui_font_Digit);
 LV_FONT_DECLARE( ui_font_Digitmain);
 LV_FONT_DECLARE( ui_font_digi_small);
 LV_FONT_DECLARE( ui_font_digismall);
+LV_FONT_DECLARE( ui_font_digismallest);
 
 // UI INIT
 void ui_init(void);

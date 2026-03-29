@@ -10,6 +10,7 @@ SET(SOURCES ui_Screen1.c
     fonts/ui_font_Digit.c
     fonts/ui_font_Digitmain.c
     fonts/ui_font_digi_small.c
-    fonts/ui_font_digismall.c)
+    fonts/ui_font_digismall.c
+    fonts/ui_font_digismallest.c)
 
 add_library(ui ${SOURCES})

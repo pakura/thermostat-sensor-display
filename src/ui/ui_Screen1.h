@@ -26,6 +26,7 @@ extern lv_obj_t *ui_otemp;
 extern lv_obj_t *ui_owin;
 extern lv_obj_t *ui_owin1;
 extern lv_obj_t *ui_cost;
+extern lv_obj_t *ui_hum;
 // CUSTOM VARIABLES
 
 #ifdef __cplusplus
