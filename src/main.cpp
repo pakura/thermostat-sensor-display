@@ -12,8 +12,6 @@
 #include <Adafruit_SHT31.h>
 
 
-#define POT_PIN 4
-
 LGFX lcd;
 
 const char* ssid = WIFI_SSID;
@@ -188,32 +186,60 @@ void updateBrightness() {
   }
 }
 
-void sendPing() {
-  if (millis() - lastPingFetch < 300000) return; // ყოველ 5 წუთში ერთხელ
-  lastPingFetch = millis();
+// SHT31 averaging state
+static float    shtTempSum   = 0;
+static float    shtHumSum    = 0;
+static int      shtReadCount = 0;
+static float    shtAvgTemp   = NAN;
+static float    shtAvgHum    = NAN;
 
-  if (WiFi.status() != WL_CONNECTED) return;
+void readSHT31() {
+  static unsigned long lastRead = 0;
+  if (millis() - lastRead < 5000) return; // ყოველ 5 წამში ერთხელ
+  lastRead = millis();
 
-  float temp = sht31.readTemperature();
-  float hum  = sht31.readHumidity();
-
-  if (isnan(temp) || isnan(hum)) {
+  float t = sht31.readTemperature();
+  float h = sht31.readHumidity();
+  if (isnan(t) || isnan(h)) {
     Serial.println("SHT31 read error");
     return;
   }
+
+  shtTempSum   += t;
+  shtHumSum    += h;
+  shtReadCount++;
+
+  // ყოველ 1 წუთში (12 გაზომვა × 5წმ) საშუალო გამოითვლება
+  if (shtReadCount >= 12) {
+    shtAvgTemp   = shtTempSum / shtReadCount;
+    shtAvgHum    = shtHumSum  / shtReadCount;
+    shtTempSum   = 0;
+    shtHumSum    = 0;
+    shtReadCount = 0;
+    Serial.print("SHT31 avg → temp="); Serial.print(shtAvgTemp, 1);
+    Serial.print(" hum=");             Serial.println(shtAvgHum, 0);
+  }
+}
+
+void sendPing() {
+  if (millis() - lastPingFetch < 60000) return; // ყოველ 1 წუთში ერთხელ
+  lastPingFetch = millis();
+
+  if (WiFi.status() != WL_CONNECTED) return;
+  if (isnan(shtAvgTemp) || isnan(shtAvgHum)) return; // ჯერ საშუალო არ არის
 
   WiFiClientSecure client;
   client.setInsecure();
 
   HTTPClient http;
-  String url = "https://" + String(API_KEY) + ".http.ge/api/ping?temp=" + String(temp, 1) + "&hum=" + String(hum, 0);
+  String url = "https://" + String(API_KEY) + ".http.ge/api/ping?temp=" + String(shtAvgTemp, 1) + "&hum=" + String(shtAvgHum, 0);
   http.begin(client, url);
 
   int code = http.GET();
   Serial.print("=== /api/ping === ");
   Serial.print(code);
-  Serial.print(" | temp="); Serial.print(temp, 1);
-  Serial.print(" hum=");    Serial.println(hum, 0);
+  Serial.print(" | temp="); Serial.print(shtAvgTemp, 1);
+  Serial.print(" hum=");    Serial.println(shtAvgHum, 0);
 
   http.end();
 }
@@ -233,7 +259,7 @@ void checkWiFi() {
       // timer-ები გადაყენდება რომ ეგრევე გაიგზავნოს რექვესტი
       lastHomeFetch    = millis() - 10000;
       lastWeatherFetch = millis() - 900000;
-      lastPingFetch    = millis() - 300000;
+      lastPingFetch    = millis() - 60000;
 
       // აჩვენე icon
       lv_obj_clear_flag(ui_wifi, LV_OBJ_FLAG_HIDDEN);
@@ -297,6 +323,7 @@ void loop() {
   lv_timer_handler();
   lv_tick_inc(5);
   updateBrightness();
+  readSHT31();
   checkWiFi();
   fetchHomeData();
   fetchWeatherData();
